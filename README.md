@@ -1,4 +1,4 @@
-pySelect
+pyselect
 ========
 
 Python Interactive Selection Tool
