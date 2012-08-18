@@ -1,0 +1,108 @@
+#!/usr/bin/python
+
+import curses   # base curses functionality.
+import argparse # Command line parsing.
+
+######################
+# Command line parsing
+######################
+def parseCmdLineArgs():
+    parser = argparse.ArgumentParser(
+            description='Interactive selection of ASCII lines using python similar to iselect'
+    )
+    parser.add_argument(
+        "-f", "--file",
+        required=True,
+        help='File to write the user selection. Use this after using this script.',
+        dest='file'
+    )
+    parser.add_argument(
+        "-l", "--lines",
+        required=True,
+        nargs='*',
+        help='Lines to be displayed interactively to the user',
+        dest='inLines',
+        metavar='line' 
+    )
+    return parser.parse_args()
+
+###############################################
+# Main function which shows the curses GUI.
+# outLines contains the lines selected by user.
+###############################################
+def main(stdscr, inLines, outLines):
+    ###############
+    # Add the lines
+    ###############
+    y = 0
+    for line in inLines:
+        line = str(y+1) + ") " + line # pretty format the line.
+        print line
+        stdscr.addstr(y, 0, line)
+        y = y + 1
+ 
+    stdscr.move(0,0) # default cursor location.
+
+    ####################
+    # handle user inputs
+    ####################
+    while 1:
+        c = stdscr.getch()
+        if   c == ord('q')  : 
+            # Handle exits
+            break 
+        # Curses special key constants do not seem to be reliable, provide actual
+        # ascii value 10 to trap the ENTER key
+        elif c in (curses.KEY_ENTER, 10):
+            # Handle selection.
+            (y, x) = curses.getsyx();
+            outLines.append(inLines[y])
+            break
+        elif c in (curses.KEY_DOWN, curses.KEY_UP):
+            # Handle cursor movements.
+            (oldy, oldx) = curses.getsyx()
+
+            if   c == curses.KEY_DOWN : newy = oldy + 1
+            elif c == curses.KEY_UP   : newy = oldy - 1
+
+            # do nothing for invalid movements.
+            if newy < 0            : continue
+            if newy >= len(inLines): continue
+
+            # do the movement.
+            stdscr.move(newy, oldx)
+
+            # do the highlighting for the lines.
+            stdscr.chgat(oldy, 0, len(inLines[oldy]) + len(str(oldy)) + 2,
+                    curses.A_NORMAL)
+            stdscr.chgat(newy, 0, len(inLines[newy]) + len(str(newy)) + 2,
+                    curses.A_BOLD)
+        else:
+             # Ignore any other key press
+             pass
+
+######
+# Main
+######
+
+###############################
+# Parse Command Line Arguments.
+###############################
+args = parseCmdLineArgs()
+print args
+
+print "#########"
+
+# return list to save the user selection.
+# Currently we allow only one selection but this can be extended to allow
+# multiple lines to be selected.
+outLines = []
+# use wrapper function which does the intialization and deinitialization of
+# curses library. wrapper also take care of catching any curses exception and
+# keeping the terminal sane in case of errors.
+curses.wrapper(main, args.inLines, outLines)
+
+OUT = open(args.file, "w")
+OUT.write(outLines[0])
+OUT.close()
+# print(outLines[0]) # For debugging
