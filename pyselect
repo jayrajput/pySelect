@@ -1,186 +1,83 @@
 #!/usr/bin/python
 
 # pyselect
-# Jay Rajput. jayrajput@gmail.com
+# @aythor Jay Rajput. 
+# @email  jayrajput@gmail.com
+# @See    http://www.nicosphere.net/selectable-list-with-urwid-for-python-2542/
 
-import curses   # base curses functionality.
-import argparse # Command line parsing.
+# python curses library. @See http://excess.org/urwid/
+import urwid
+# Command line parsing.
+import argparse
 
+class ItemWidget (urwid.WidgetWrap):
+    def __init__ (self, id, description):
+        self.id = id
+        self.content = '%s' % (description[0:])
+        self.item = [
+            ('fixed', 15, urwid.Padding(urwid.AttrWrap(
+                urwid.Text('item %s' % str(id)), 'body', 'focus'), left=2)),
+            urwid.AttrWrap(urwid.Text('%s' % description), 'body', 'focus'),
+        ]
+        w = urwid.Columns(self.item)
+        self.__super.__init__(w)
 
-def mydebug(msg):
-    DEBUGLOG = open("/tmp/debug", "a")
-    DEBUGLOG.write(msg)
-    DEBUGLOG.close()
+    def selectable (self):
+        return True
 
-######################
-# Command line parsing
-######################
-def parseCmdLineArgs():
-    parser = argparse.ArgumentParser(
-            description='Interactive selection of ASCII lines using python similar to iselect'
-    )
-    parser.add_argument(
-        "-f", "--file",
-        required=True,
-        help='File to write the user selection. Use this after using this script.',
-        dest='file'
-    )
-    parser.add_argument(
-        "-l", "--lines",
-        required=True,
-        nargs='*',
-        help='Lines to be displayed interactively to the user',
-        dest='inLines',
-        metavar='line' 
-    )
-    return parser.parse_args()
+    def keypress(self, size, key):
+        return key
 
-def getmax(lines): return max([len(str(l)) for l in lines])
+def main ():
+    ######################
+    # Command line parsing
+    ######################
+    def parseCmdLineArgs():
+        parser = argparse.ArgumentParser(
+                description='Interactive selection of ASCII lines using python similar to iselect'
+        )
+        parser.add_argument(
+            "-f", "--file",
+            required=True,
+            help='File to write the user selection.',
+            dest='file'
+        )
+        parser.add_argument(
+            "-l", "--lines",
+            required=True,
+            nargs='*',
+            help='Lines to be displayed interactively to the user',
+            dest='inLines',
+            metavar='line' 
+        )
+        return parser.parse_args()
 
-###############################################
-# Main function which shows the curses GUI.
-# outLines contains the lines selected by user.
-###############################################
-def main(screen, inLines, outLines):
-    
-    screen.clear()
-    # show a border line.
-    screen.border(0)
+    args = parseCmdLineArgs()
 
-    # refresh so that pad created later is seen to the user. Without this
-    # refresh call, pad is not seen.
-    screen.refresh()
+    palette = [
+        ('body','dark cyan', '', 'standout'),
+        ('focus','dark red', '', 'standout'),
+        ('head','light red', 'black'),
+        ]
 
-    # SCREEN size.
-    (screenY,screenX) = screen.getmaxyx()
-    # do adjustment for borders, 1 line on each side.
-    screenY -= 2
-    screenX -= 2
+    def keystroke (input):
+        if input in ('q', 'Q'):
+            raise urwid.ExitMainLoop()
 
-    # PAD size.
-    padX = max(getmax(inLines), screenX)
-    padY = max(len(inLines)+1,  screenY)
+        if input is 'enter':
+            focus = listbox.get_focus()[0].content
+            view.set_header(urwid.AttrWrap(urwid.Text(
+                'selected: %s' % str(focus)), 'head'))
 
-    # max co-ordinates used for pad.refresh. pad cannot have first and # second
-    # arg greater than these
-    maxX = padX - screenX
-    maxY = padY - screenY
+    items = []
+    for i, line in enumerate(args.inLines):
+        items.append(ItemWidget(i, str(line)))
 
-    # we need a pad as the data can be greater than the actual window.
-    # A pad is a special case of a window; it can be larger than the actual
-    # display screen, and only a portion of it displayed at a time.
-    pad = curses.newpad(padY,padX)
+    header = urwid.AttrMap(urwid.Text('selected:'), 'head')
+    listbox = urwid.ListBox(urwid.SimpleListWalker(items))
+    view = urwid.Frame(urwid.AttrWrap(listbox, 'body'), header=header)
+    loop = urwid.MainLoop(view, palette, unhandled_input=keystroke)
+    loop.run()
 
-    ###############
-    # Add the lines
-    ###############
-    for i, line in enumerate(inLines):
-        pad.addstr(i, 0, str(i + 1) + "[ ]" + line)
-
-    # x and y are the upper left-hand corner of the rectange to be displayed in
-    # the pad.
-    x=0
-    y=0
-    inkey=0
-    pad.refresh(y,x,1,1,screenY,screenX)
-    #coord = 1, 1, screenY, screenX
-    #pad.refresh(0, 0, *coord)
-    screen.move(y + 1, 3)
-    # DEBUGLOG = open("/tmp/log", "w")
-    ####################
-    # handle user inputs
-    ####################
-    while inkey != 'q':
-        inkey = screen.getkey()
-                
-        if   inkey == 'KEY_UP'   : y = max(y - 1 , 0)
-        elif inkey == 'KEY_DOWN' : y = min(y + 1 , maxY)
-        elif inkey == 'KEY_NPAGE': y = min(y + screenY, maxY)
-        elif inkey == 'KEY_PPAGE': y = max(y - screenY, 0)
-        elif inkey == 'KEY_HOME' : y = 0
-        elif inkey == 'KEY_END'  : y = maxY
-
-        # refresh args in their respective order - pminrow, pmincol, sminrow,
-        # smincol, smaxrow, smaxcol
-        # pminrow, pmincol are the upper left-hand corner of the rectange to be
-        # displayed in the pad.  sminrow, smincol, smaxrow, smaxcol specify the
-        # edges of rectange to be displayed.
-        pad.refresh(y,x,1,1,screenY,screenX)
-
-        if not pad.is_wintouched():
-            (cy, cx) = screen.getyx()
-            if cy == screenY and y == maxY:
-                mydebug("JR - 1")
-                screen.move(0, 3)
-            else:
-                mydebug("JR - 2")
-                (cy, cx) = screen.getyx()
-                screen.move(cy+1, 3)
-        # else:
-            # screen.move(1, 3)
-            
-        #DEBUGLOG.write("y =" + str(y))
-        #DEBUGLOG.write("oldY =" + str(oldY))
-
-    #DEBUGLOG.close()
-
-    #while 1:
-    #    c = screen.getch()
-    #    if   c == ord('q')  : 
-    #        # Handle exits
-    #        break 
-    #    # Curses special key constants do not seem to be reliable, provide actual
-    #    # ascii value 10 to trap the ENTER key
-    #    elif c in (curses.KEY_ENTER, 10):
-    #        # Handle selection.
-    #        (y, x) = curses.getsyx();
-    #        outLines.append(inLines[y])
-    #        break
-    #    elif c in (curses.KEY_DOWN, curses.KEY_UP):
-    #        # Handle cursor movements.
-    #        (oldy, oldx) = curses.getsyx()
-
-    #        if   c == curses.KEY_DOWN : newy = oldy + 1
-    #        elif c == curses.KEY_UP   : newy = oldy - 1
-
-    #        # do nothing for invalid movements.
-    #        if newy < 0            : continue
-    #        if newy >= len(inLines): continue
-
-    #        # do the movement.
-    #        screen.move(newy, oldx)
-
-    #        # do the highlighting for the lines.
-    #        screen.chgat(oldy, 0, len(inLines[oldy]) + len(str(oldy)) + 2,
-    #                curses.A_NORMAL)
-    #        screen.chgat(newy, 0, len(inLines[newy]) + len(str(newy)) + 2,
-    #                curses.A_BOLD)
-    #    else:
-    #         # Ignore any other key press
-    #         pass
-
-######
-# Main
-######
-
-###############################
-# Parse Command Line Arguments.
-###############################
-args = parseCmdLineArgs()
-print args
-
-print "#########"
-
-# return list to save the user selection.
-# Currently we allow only one selection but this can be extended to allow
-# multiple lines to be selected.
-outLines = []
-# use wrapper function which does the intialization and deinitialization of
-# curses library. wrapper also take care of catching any curses exception and
-# keeping the terminal sane in case of errors.
-curses.wrapper(main, args.inLines, outLines)
-
-OUT = open(args.file, "w")
-OUT.write(outLines[0])
-OUT.close()
-print(outLines[0]) # For debugging
+if __name__ == '__main__':
+    main()
