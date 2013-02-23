@@ -8,7 +8,7 @@ full-screen Curses-based terminal session. It is primarily written to be used by
 other scripts (like bash, python, perl) to make useful scripts. It is inspired
 from iselect (http://manpages.ubuntu.com/manpages/lucid/man1/iselect.1.html).
 Since iselect is written in C, I wanted to do something in python which is more
-fun and more extensible. Just hack the pyselect to add more functionality.
+fun, extensible and less than 100 lines. Just hack the pyselect to add more functionality.
 
 Software requirement:
 This python script requires urwid (one of the python curses library). On ubuntu
@@ -33,13 +33,15 @@ optional arguments:
 Examples:
 
 Simple Usage:
+
 This command will open full screen Curses-based terminal session. And then
-depending on the user selection, the user selection will be return to the file
+depending on the user selection, the user selection will be written to the file
 specified in -f argument of the command.
 
 pyselect -f ~/.result -l line1 line2 line3
 
 Advanced Usage:
+
 pyselect is useful when you create wrappers over it. I was using it to
 interactively select my clearcase views using the myviews function given below
 in my .bashrc
@@ -59,4 +61,3 @@ function myviews()
     fi
 }
 ```
-pyselect is inspired from iselect. But since iselect was written in C, I wanted to do something in python.
