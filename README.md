@@ -18,6 +18,7 @@ http://excess.org/urwid/ and untar the tar.gz at some place and add this
 script(pyselect) to the same directory.
 
 Command line Help:
+```
 usage: pyselect [-h] -f FILE -l [line [line ...]]
 
 Interactive selection of ASCII lines using python.
@@ -27,6 +28,7 @@ optional arguments:
   -f FILE, --file FILE  File to write the user selection.
   -l [line [line ...]], --lines [line [line ...]]
                         Lines to be displayed interactively to the user
+```
 
 Examples:
 
@@ -42,6 +44,7 @@ pyselect is useful when you create wrappers over it. I was using it to
 interactively select my clearcase views using the myviews function given below
 in my .bashrc
 
+```bash
 function myviews()
 {
     resultFile=~/.selectedview
@@ -55,5 +58,5 @@ function myviews()
         cleartool setview $(cat $resultFile)
     fi
 }
-
+```
 pyselect is inspired from iselect. But since iselect was written in C, I wanted to do something in python.
