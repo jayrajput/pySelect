@@ -35,7 +35,7 @@ Examples:
 Simple Usage:
 
 This command will open full screen Curses-based terminal session. And then
-depending on the user selection, the user selection will be return to the file
+depending on the user selection, the user selection will be written to the file
 specified in -f argument of the command.
 
 pyselect -f ~/.result -l line1 line2 line3
