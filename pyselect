@@ -81,8 +81,8 @@ def main ():
         'head'
     )
     listbox = urwid.ListBox(urwid.SimpleListWalker(items))
-    view    = urwid.Frame(urwid.AttrWrap(listbox, 'body'), header                                                                            = header)
-    loop    = urwid.MainLoop(view, palette, unhandled_input                                                                                  = keystroke)
+    view    = urwid.Frame(urwid.AttrWrap(listbox, 'body'), header=header)
+    loop    = urwid.MainLoop(view, palette, unhandled_input=keystroke)
     loop.run()
 
 if __name__ == '__main__':
