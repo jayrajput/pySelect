@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 # pyselect
-# @author Jay Rajput. 
+# @author Jay Rajput.
 # @email  jayrajput@gmail.com
 # @See    http://www.nicosphere.net/selectable-list-with-urwid-for-python-2542/
 # @See    http://manpages.ubuntu.com/manpages/lucid/man1/iselect.1.html
@@ -30,44 +30,39 @@ class ItemWidget (urwid.WidgetWrap):
         return key
 
 def main ():
-    ######################
     # Command line parsing
-    ######################
-    def parseCmdLineArgs():
-        parser = argparse.ArgumentParser(
-                description='Interactive selection of ASCII lines using python similar to iselect'
-        )
-        parser.add_argument(
-            "-f", "--file",
-            required=True,
-            help='File to write the user selection.',
-            dest='file'
-        )
-        parser.add_argument(
-            "-l", "--lines",
-            required=True,
-            nargs='*',
-            help='Lines to be displayed interactively to the user',
-            dest='inLines',
-            metavar='line' 
-        )
-        return parser.parse_args()
-
-    args = parseCmdLineArgs()
+    parser = argparse.ArgumentParser(
+        description="Interactive selection of ASCII lines using python. " +
+            "Read README in git repo for more information."
+    )
+    parser.add_argument(
+        "-f", "--file",
+        required=True,
+        help='File to write the user selection.',
+        dest='file'
+    )
+    parser.add_argument(
+        "-l", "--lines",
+        required=True,
+        nargs='*',
+        help='Lines to be displayed interactively to the user',
+        dest='inLines',
+        metavar='line'
+    )
+    args = parser.parse_args()
 
     # coloring scheme.
     palette = [
-        ('body','dark cyan', '', 'standout'),
-        ('focus','dark red', '', 'standout'),
-        ('head','light red', 'black'),
-        ]
+        ('body' , 'dark cyan', ''      , 'standout'),
+        ('focus', 'dark red' , ''      , 'standout'),
+        ('head' , 'light red', 'black'             ),
+    ]
 
     # key strokes
     def keystroke (input):
-        if input in ('q', 'Q', 'enter'):
+        if input in ('q', 'Q'):
             raise urwid.ExitMainLoop()
-
-        if input is 'enter':
+        elif input is 'enter':
             fh = open(args.file, "w")
             fh.write(listbox.get_focus()[0].content)
             fh.close()
@@ -77,10 +72,17 @@ def main ():
     for i, line in enumerate(args.inLines):
         items.append(ItemWidget(i, str(line)))
 
-    header = urwid.AttrMap(urwid.Text("Press ENTER to select an item. Use UP / DOWN / PAGE UP / PAGE DOWN for movement. q exits."), 'head')
+    header  = urwid.AttrMap(
+        urwid.Text(
+            "Press ENTER to select an item. " +
+            "Use UP / DOWN / PAGE UP / PAGE DOWN for movement. " +
+            "q exits."
+        ),
+        'head'
+    )
     listbox = urwid.ListBox(urwid.SimpleListWalker(items))
-    view = urwid.Frame(urwid.AttrWrap(listbox, 'body'), header=header)
-    loop = urwid.MainLoop(view, palette, unhandled_input=keystroke)
+    view    = urwid.Frame(urwid.AttrWrap(listbox, 'body'), header                                                                            = header)
+    loop    = urwid.MainLoop(view, palette, unhandled_input                                                                                  = keystroke)
     loop.run()
 
 if __name__ == '__main__':
