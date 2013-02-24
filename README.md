@@ -61,3 +61,7 @@ function myviews()
     fi
 }
 ```
+
+
+TODO: 
+- [ ] Implement quick select
